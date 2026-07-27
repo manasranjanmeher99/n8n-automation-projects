@@ -1,0 +1,170 @@
+{
+  "name": "Daily Weather Email Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "id": "02aeecfd-75a0-4df8-bd57-1623f1b70e84",
+      "name": "Every Morning at 6 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "cityName": "hyderabad",
+        "language": "en"
+      },
+      "id": "4ac8ff02-0715-4140-bc18-5b3d2d39da5e",
+      "name": "Get Current Weather",
+      "type": "n8n-nodes-base.openWeatherMap",
+      "typeVersion": 1,
+      "position": [
+        464,
+        304
+      ],
+      "credentials": {
+        "openWeatherMapApi": {
+          "id": "dcPIlHuyAEvnjRE5",
+          "name": "OpenWeatherMap account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create a short, fun weather report email based on this data:\n\nLocation: {{ $json.name }}, {{ $json.sys.country }}\nTemperature: {{ $json.main.temp }}°C (feels like {{ $json.main.feels_like }}°C)\nConditions: {{ $json.weather[0].description }}\nHumidity: {{ $json.main.humidity }}%\nWind Speed: {{ $json.wind.speed }} m/s\nVisibility: {{ $json.visibility }} meters\n\nAdd personality and humor when describing how the day might feel. Include practical advice about what to wear and any tips for planning the day. Keep it concise but engaging. Format it nicely with line breaks.",
+        "options": {
+          "systemMessage": "You are a cheerful weather reporter who makes daily weather updates fun and engaging. Write in a friendly, conversational tone with a touch of humor. Always include practical clothing recommendations and tips for the day based on the weather conditions."
+        }
+      },
+      "id": "f8bc307d-301f-4188-8202-50673ca1313b",
+      "name": "Generate Fun Weather Report",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        688,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0.8
+        }
+      },
+      "id": "d1128490-cb3c-4d33-9c4a-701f3b64aa52",
+      "name": "OpenAI GPT-4.1 Mini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        768,
+        528
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "Mp6G8bLDl6wJXDJS",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "mohanty.jagatjyoti@gmail.com",
+        "subject": "=☀️ Your Daily Weather Report - {{ $now.toFormat(\"MMMM d, yyyy\") }}",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {
+          "appendAttribution": true
+        }
+      },
+      "id": "8b97e94f-8e2d-4527-93fc-2e18badb1b54",
+      "name": "Send Weather Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        304
+      ],
+      "webhookId": "9e45a666-9be5-472e-85c9-b29d3a1b6cc4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ZmLQkRxXuJ0yykRo",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every Morning at 6 AM": {
+      "main": [
+        [
+          {
+            "node": "Get Current Weather",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Current Weather": {
+      "main": [
+        [
+          {
+            "node": "Generate Fun Weather Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Fun Weather Report": {
+      "main": [
+        [
+          {
+            "node": "Send Weather Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI GPT-4.1 Mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Fun Weather Report",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
